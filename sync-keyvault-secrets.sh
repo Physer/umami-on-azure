@@ -1,13 +1,9 @@
 #!/bin/bash
 # Sync secrets from .env.keyvault file to Azure Key Vault
 
-set -euo pipefail
-
-# Configuration
 VAULT_NAME="${1:-}"
 ENV_FILE="${2:-.env.keyvault}"
 
-# Validate inputs
 if [ -z "$VAULT_NAME" ]; then
   echo "Usage: $0 <vault-name> [env-file]"
   echo "Example: $0 my-keyvault-dev .env.keyvault"
@@ -19,7 +15,6 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-# Check Azure CLI authentication
 if ! az account show &>/dev/null; then
   echo "❌ Not logged in to Azure. Run: az login"
   exit 1
@@ -27,28 +22,35 @@ fi
 
 echo "🔐 Syncing $ENV_FILE → $VAULT_NAME"
 
-# Process .env file and set secrets
-count=0
-while IFS='=' read -r key value || [ -n "$key" ]; do
-  # Skip comments, empty lines, and lines without '='
-  [[ "$key" =~ ^[[:space:]]*# ]] && continue
-  [[ -z "$key" ]] && continue
-  [[ ! "$key" =~ = ]] && [[ -z "$value" ]] && continue
-  
-  # Trim whitespace and remove quotes
-  key=$(echo "$key" | xargs)
-  value=$(echo "$value" | xargs | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
-  
-  # Skip if key or value is empty
-  [[ -z "$key" ]] || [[ -z "$value" ]] && continue
-  
-  # Convert KEY_NAME to key-name (Key Vault naming convention)
-  kv_key=$(echo "$key" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
-  
-  echo "  📤 $kv_key"
-  az keyvault secret set --vault-name "$VAULT_NAME" --name "$kv_key" --value "$value" -o none
-  
-  ((count++))
-done < "$ENV_FILE"
+success=0
+fail=0
+exec 3<"$ENV_FILE"
+while IFS= read -r line <&3 || [ -n "$line" ]; do
+  # Remove trailing CR for compatibility with CRLF and LF files
+  line="${line%$'\r'}"
 
-echo "✅ Set $count secret(s) in $VAULT_NAME"
+  # Skip empty lines
+  [ -z "$line" ] && continue
+
+  # Split key and value
+  key="${line%%=*}"
+  value="${line#*=}"
+
+  # Skip if key or value is empty
+  [ -z "$key" ] && continue
+  [ -z "$value" ] && continue
+
+  echo "  📤 $key"
+  if az keyvault secret set --vault-name "$VAULT_NAME" --name "$key" --value "$value" -o none; then
+    ((success++))
+  else
+    echo "    ⚠️ Failed to set secret: $key"
+    ((fail++))
+  fi
+done
+exec 3<&-
+
+echo "✅ Set $success secret(s) in $VAULT_NAME"
+if [ "$fail" -gt 0 ]; then
+  echo "⚠️ $fail secret(s) failed to set."
+fi

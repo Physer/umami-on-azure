@@ -51,19 +51,29 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
    az deployment sub create --location <your-azure-region> -f ./deployKeyVault.bicep -p ./parameters/keyvault/local.bicepparam
    ```
 
-4. **Deploy the Application Infrastructure**
+4. **Upload Secrets to Azure Key Vault**
+
+   After Key Vault is deployed, upload your secrets before deploying the application infrastructure:
+
+   ```bash
+   ./sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
+   ```
+
+   > Fill in `.env.keyvault` with your secret values before running the script.
+
+5. **Deploy the Application Infrastructure**
 
    ```pwsh
    az deployment sub create --location <your-azure-region> -f ./deployApplication.bicep -p ./parameters/application/local.bicepparam
    ```
 
-5. **Resource Provisioning**
+6. **Resource Provisioning**
 
    The deployments will provision:
    - Azure Virtual Network with private endpoints and DNS Private Resolver
    - Point-to-Site VPN Gateway with Azure AD authentication
    - Azure Key Vault for secure secret management
-   - Azure App Service with Linux container
+   - Azure App Service with Linux container (secrets injected from Key Vault)
    - PostgreSQL Flexible Server database
    - Supporting networking infrastructure
 
@@ -116,7 +126,9 @@ For local development and testing, you can run Umami using Docker Compose. The D
 
 ## 🔐 Secrets Management with Azure Key Vault
 
-This project integrates **Azure Key Vault** for secure, centralized management of application secrets and sensitive configuration values. Secrets are not stored in source control or parameter files, but are managed directly in Azure Key Vault and injected into the application at runtime.
+This project integrates **Azure Key Vault** for secure, centralized management of application secrets and sensitive configuration values. The Key Vault is protected by a private endpoint, restricting access to only resources and users on the private network.
+
+Secrets are not stored in source control or parameter files, but are managed directly in Azure Key Vault and injected into the application at runtime.
 
 ### How It Works
 
@@ -126,7 +138,9 @@ This project integrates **Azure Key Vault** for secure, centralized management o
 
 ### Using the Key Vault Sync Script
 
-You can quickly sync secrets from a local `.env.keyvault` file to your Azure Key Vault using the provided script. This is especially useful for initial setup or when rotating secrets.
+You can quickly sync secrets from a local `.env.keyvault` file to your Azure Key Vault using the provided script.
+
+**Note:** Because the Key Vault is protected by a private endpoint, you must run the script from a machine with network access to the private subnet (e.g., via VPN or a VM in the same network). This is especially useful for initial setup or when rotating secrets.
 
 #### 1. Prepare Your Secrets File
 
@@ -159,6 +173,12 @@ The script will upload each secret to the specified Key Vault. It will report an
 #### 3. Reference Secrets in Bicep/Parameters
 
 The Bicep templates are designed to reference secrets from Key Vault using the `@Microsoft.KeyVault` syntax in parameter files, or by configuring App Service to use Key Vault references for environment variables.
+
+Example parameter reference:
+
+```bicep
+param umamiAppSecret string = '@Microsoft.KeyVault(SecretUri=https://<your-keyvault-name>.vault.azure.net/secrets/umamiAppSecret/)'
+```
 
 No secrets are stored in source control or plain text parameter files.
 

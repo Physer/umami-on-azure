@@ -165,11 +165,11 @@ module umamiAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVaultRo
   }
 }
 
-module pgAdminAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVaultRoleAssignment.bicep' = if (deployPgAdmin) {
+module pgAdminAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVaultRoleAssignment.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
   name: 'deployPgAdminAppServiceKeyVaultRoleAssignment'
   params: {
     keyVaultName: keyVaultName
-    principalId: pgAdminAppService!.outputs.principalId
+    principalId: (deployPgAdmin && !empty(pgAdminAppServiceName)) ? pgAdminAppService.outputs.principalId : ''
     roleDefinitionId: keyVaultSecretsUserRoleDefinitionId
   }
 }

@@ -1,12 +1,12 @@
-param postgresDatabaseResourceName string
 param virtualNetworkName string
+param privateDnsZoneFqdn string
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
   name: virtualNetworkName
 }
 
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: '${postgresDatabaseResourceName}.private.postgres.database.azure.com'
+  name: privateDnsZoneFqdn
   location: 'global'
 }
 

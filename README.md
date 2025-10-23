@@ -102,6 +102,56 @@ For local development and testing, you can run Umami using Docker Compose. The D
    docker compose down
    ```
 
+## 🔐 Secrets Management with Azure Key Vault
+
+This project integrates **Azure Key Vault** for secure, centralized management of application secrets and sensitive configuration values. Secrets are not stored in source control or parameter files, but are managed directly in Azure Key Vault and injected into the application at runtime.
+
+### How It Works
+
+- Secrets required by Umami (such as database credentials, API keys, etc.) are stored in Azure Key Vault.
+- The infrastructure and App Service are configured to reference these secrets securely using managed identity.
+- A helper script, [`sync-keyvault-secrets.sh`](./sync-keyvault-secrets.sh), is provided to automate uploading secrets from a local file to your Azure Key Vault.
+
+### Using the Key Vault Sync Script
+
+You can quickly sync secrets from a local `.env.keyvault` file to your Azure Key Vault using the provided script. This is especially useful for initial setup or when rotating secrets.
+
+#### 1. Prepare Your Secrets File
+
+Copy the provided `.env.keyvault.example` file to `.env.keyvault` in the project root. Each line should be in `KEY=VALUE` format. The example file lists all required secret keys—fill in the values for your environment.
+
+#### 2. Run the Sync Script
+
+Make sure you are logged in to Azure CLI and have access to the target Key Vault:
+
+```bash
+az login
+```
+
+Then run the script, specifying your Key Vault name (and optionally the env file):
+
+```bash
+./sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
+```
+
+Example:
+
+```bash
+./sync-keyvault-secrets.sh my-keyvault-dev
+```
+
+The script will upload each secret to the specified Key Vault. It will report any failures and a summary at the end.
+
+> **Note:** The script requires Bash (Linux/macOS or WSL on Windows) and Azure CLI installed.
+
+#### 3. Reference Secrets in Bicep/Parameters
+
+The Bicep templates are designed to reference secrets from Key Vault using the `@Microsoft.KeyVault` syntax in parameter files, or by configuring App Service to use Key Vault references for environment variables.
+
+No secrets are stored in source control or plain text parameter files.
+
+---
+
 ## 🔐 VPN Connectivity
 
 The infrastructure includes a Point-to-Site VPN Gateway that enables secure connectivity from on-premises machines to the Azure Virtual Network. This allows direct access to private resources and seamless integration with existing corporate networks.
@@ -160,20 +210,21 @@ The following enhancements are planned to expand and improve the platform:
 
 ### 🔧 Development & Operations
 
-- **🔄 CI/CD Automation** - Automated deployment pipelines for staging and production environments
+- **🔄 CI/CD Automation** – Automated deployment pipelines for staging and production environments
 
-### 🔐 Security & Configuration  
+### 🔐 Security & Configuration
 
-- **🔑 Secrets Management** - Azure Key Vault integration for secure credential handling
-- **🌐 Custom Domains** - Support for custom domain configuration via Bicep automation
-- **🛡️ Access Control** - IP whitelisting and Entra ID managed identity integration
-- **🔒 Site-to-Site VPN** - Extension to support site-to-site VPN connections for branch offices
-- **📡 ExpressRoute Integration** - Support for dedicated network connections via Azure ExpressRoute
+- **✅ Secrets Management** – Azure Key Vault integration for secure credential handling (**Completed**)
+- **🌐 Custom Domains** – Support for custom domain configuration via Bicep automation
+- **🛡️ Access Control** – IP whitelisting and Entra ID managed identity integration
+- **🔒 Site-to-Site VPN** – Extension to support site-to-site VPN connections for branch offices
+- **📡 ExpressRoute Integration** – Support for dedicated network connections via Azure ExpressRoute
+- **🔄 Secret Rotation Automation** – Automated workflows for rotating and syncing secrets between environments
 
 ### 🚀 Advanced Deployment
 
-- **⚡ Zero-Downtime Updates** - Sidecar deployment pattern implementation
-- **🔒 Enhanced Security** - Advanced network isolation and access restrictions
+- **⚡ Zero-Downtime Updates** – Sidecar deployment pattern implementation
+- **🔒 Enhanced Security** – Advanced network isolation and access restrictions
 
 ---
 

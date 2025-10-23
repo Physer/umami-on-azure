@@ -37,22 +37,34 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
    az login
    ```
 
-2. **Deploy the Infrastructure**
+2. **Deploy the Networking Infrastructure**
 
    ```pwsh
-   az deployment sub create --location <your-azure-region> -f ./deployUmami.bicep -p ./parameters/local.bicepparam
+   az deployment sub create --location <your-azure-region> -f ./deployNetwork.bicep -p ./parameters/network/local.bicepparam
    ```
 
    > Replace `<your-azure-region>` with your preferred Azure region (e.g., `swedencentral`)
 
-3. **Resource Provisioning**
+3. **Deploy the Azure Key Vault**
 
-   The deployment automatically provisions:
+   ```pwsh
+   az deployment sub create --location <your-azure-region> -f ./deployKeyVault.bicep -p ./parameters/keyvault/local.bicepparam
+   ```
+
+4. **Deploy the Application Infrastructure**
+
+   ```pwsh
+   az deployment sub create --location <your-azure-region> -f ./deployApplication.bicep -p ./parameters/application/local.bicepparam
+   ```
+
+5. **Resource Provisioning**
+
+   The deployments will provision:
+   - Azure Virtual Network with private endpoints and DNS Private Resolver
+   - Point-to-Site VPN Gateway with Azure AD authentication
+   - Azure Key Vault for secure secret management
    - Azure App Service with Linux container
    - PostgreSQL Flexible Server database
-   - Virtual Network with private endpoints
-   - Point-to-Site VPN Gateway with Azure AD authentication
-   - DNS Private Resolver for hybrid name resolution
    - Supporting networking infrastructure
 
 > ⚠️ **Environment Notice**: This configuration currently deploys a local/development environment. Production and staging environments will be supported in future releases.
@@ -195,14 +207,16 @@ The DNS Private Resolver automatically handles name resolution for:
 
 ## ✨ Current Features
 
-- ✅ **Automated Infrastructure Provisioning** - Complete resource deployment using Bicep templates
-- ✅ **Azure CLI Integration** - Streamlined deployment via command-line interface with parameter files  
-- ✅ **Virtual Network Security** - Isolated network architecture with private endpoint connectivity
-- ✅ **Hybrid Connectivity** - Point-to-Site VPN Gateway with Azure AD authentication for secure on-premises access
-- ✅ **DNS Resolution** - Azure DNS Private Resolver for seamless name resolution between networks
-- ✅ **Container-Based Hosting** - Modern Linux container deployment on Azure App Service
-- ✅ **Local Development Setup** - Docker Compose configuration for streamlined local development and testing
-- ✅ **Application Monitoring** - Azure Application Insights integration for comprehensive observability
+- ✅ **Automated Infrastructure Provisioning** – Complete resource deployment using Bicep templates
+- ✅ **Azure Key Vault Integration** – Centralized, secure management of all application secrets and sensitive configuration values
+- ✅ **Secret Automation Script** – Easily sync secrets from local files to Azure Key Vault using the provided script
+- ✅ **Azure CLI Integration** – Streamlined deployment via command-line interface with parameter files
+- ✅ **Virtual Network Security** – Isolated network architecture with private endpoint connectivity
+- ✅ **Hybrid Connectivity** – Point-to-Site VPN Gateway with Azure AD authentication for secure on-premises access
+- ✅ **DNS Resolution** – Azure DNS Private Resolver for seamless name resolution between networks
+- ✅ **Container-Based Hosting** – Modern Linux container deployment on Azure App Service, with secrets injected securely from Key Vault
+- ✅ **Local Development Setup** – Docker Compose configuration for streamlined local development and testing
+- ✅ **Application Monitoring** – Azure Application Insights integration for comprehensive observability
 
 ## 🛣️ Roadmap
 

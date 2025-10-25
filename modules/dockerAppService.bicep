@@ -9,8 +9,11 @@ param subnetName string
 param imageName string
 param imageTag string
 param appSettings appSetting[]
-
-var publicNetworkAccess string = 'Enabled'
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param publicNetworkAccess string
 
 resource dockerAppService 'Microsoft.Web/sites@2024-11-01' = {
   name: appServiceName

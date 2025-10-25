@@ -92,6 +92,7 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
     appServiceName: umamiAppServiceName
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
+    publicNetworkAccess: 'Enabled'
     appSettings: [
       {
         name: 'DATABASE_TYPE'
@@ -152,6 +153,7 @@ module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin &&
     imageTag: 'latest'
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
+    publicNetworkAccess: 'Disabled'
   }
 }
 

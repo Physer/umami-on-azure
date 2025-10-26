@@ -17,4 +17,4 @@ param virtualNetworkName = 'vnet-analytics-${environment}'
 param virtualNetworkGatewayPublicIpName = 'pip-vpn-analytics-${environment}'
 param virtualNetworkGatewayName = 'vgw-analytics-${environment}'
 param dnsPrivateResolverName = 'dnspr-analytics-${environment}'
-param deployVpnGateway = true
+param deployVpnGateway = false

@@ -1,2 +1,3 @@
 # Set LF line endings for shell scripts
 sync-keyvault-secrets.sh text eol=lf
+create-cloudflare-dns-records.sh text eol=lf

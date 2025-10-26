@@ -18,6 +18,7 @@ The entire deployment is orchestrated using **Azure Bicep templates**, ensuring 
 - **🔒 Network Security**: Isolated deployment using Azure Virtual Networks with private DNS and secure connectivity
 - **🌐 Hybrid Connectivity**: Point-to-Site VPN Gateway with Azure AD authentication for secure on-premises access
 - **🔍 DNS Resolution**: Azure DNS Private Resolver for seamless name resolution between on-premises and Azure resources
+- **🌍 Custom Domain Support**: Automated custom domain configuration with SSL certificates and DNS management
 - **📊 Privacy-First Analytics**: Complete data ownership with GDPR-compliant analytics platform
 
 This solution is perfect for organizations seeking enterprise-grade analytics without compromising on data privacy or control.
@@ -67,7 +68,18 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
    az deployment sub create --location <your-azure-region> -f ./deployApplication.bicep -p ./parameters/application/local.bicepparam
    ```
 
-6. **Resource Provisioning**
+6. **Configure Custom Domain (Optional)**
+
+   If you want to use a custom domain instead of the default Azure App Service URL:
+
+   ```pwsh
+   # Deploy custom domain configuration
+   az deployment group create --resource-group <your-resource-group> -f ./deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
+   ```
+
+   For Cloudflare DNS management, see the [Custom Domain Setup](#-custom-domain-setup) section below.
+
+7. **Resource Provisioning**
 
    The deployments will provision:
    - Azure Virtual Network with private endpoints and DNS Private Resolver
@@ -225,6 +237,91 @@ The DNS Private Resolver automatically handles name resolution for:
 
 > 💡 **Note**: VPN connectivity is particularly useful for development teams, database administration, and secure access to private Azure resources without exposing them to the public internet.
 
+---
+
+## 🌍 Custom Domain Setup
+
+The infrastructure supports custom domain configuration with automated SSL certificate provisioning through Azure App Service Managed Certificates. This allows you to access your Umami instance using your own domain name with HTTPS encryption.
+
+### Custom Domain Features
+
+- **🔒 Automatic SSL Certificates**: Azure-managed SSL certificates with automatic renewal
+- **🌐 DNS Integration**: Automated Cloudflare DNS record management scripts
+- **🔧 Bicep Automation**: Infrastructure-as-code approach for domain configuration
+- **⚡ Easy Deployment**: Simple command-line deployment of custom domain resources
+
+### Setting Up a Custom Domain
+
+1. **Verify Domain Ownership**
+
+   Before deploying, ensure you have administrative access to your domain's DNS settings.
+
+2. **Deploy Custom Domain Infrastructure**
+
+   ```pwsh
+   az deployment group create --resource-group <your-resource-group> -f ./deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
+   ```
+
+3. **Configure DNS Records**
+
+   For Cloudflare users, automated scripts are provided to manage DNS records:
+
+   ```bash
+   # Create .env.cloudflare from the example template
+   cp .env.cloudflare.example .env.cloudflare
+   
+   # Edit .env.cloudflare with your Cloudflare API token and Zone ID
+   
+   # Create/update DNS record pointing to your App Service
+   ./create-cloudflare-dns-records.sh <your-domain.com> CNAME <your-app-service>.azurewebsites.net
+   
+   # Enable Cloudflare proxy (optional)
+   ./proxy-cloudflare-dns-records.sh <your-domain.com> on
+   ```
+
+### Cloudflare Integration
+
+The project includes specialized scripts for Cloudflare DNS management:
+
+#### Prerequisites for Cloudflare Scripts
+
+- **Cloudflare API Token**: Create an API token with `Zone:Edit` permissions for your domain
+- **Zone ID**: Your Cloudflare Zone ID for the target domain
+- **jq**: JSON processor tool for parsing API responses
+
+#### DNS Management Scripts
+
+- **`create-cloudflare-dns-records.sh`**: Creates or updates DNS records (CNAME, A, etc.)
+- **`proxy-cloudflare-dns-records.sh`**: Toggles Cloudflare proxy status for enhanced security and performance
+
+#### Configuration
+
+1. **Create Cloudflare Configuration**
+
+   ```bash
+   cp .env.cloudflare.example .env.cloudflare
+   ```
+
+2. **Edit Configuration File**
+
+   Add your Cloudflare credentials:
+   ```bash
+   CLOUDFLARE_API_TOKEN=your_api_token_here
+   ZONE_ID=your_zone_id_here
+   ```
+
+3. **Use the Scripts**
+
+   ```bash
+   # Create a CNAME record
+   ./create-cloudflare-dns-records.sh subdomain.yourdomain.com CNAME your-app-service.azurewebsites.net
+   
+   # Enable Cloudflare proxy for additional security
+   ./proxy-cloudflare-dns-records.sh subdomain.yourdomain.com on
+   ```
+
+> 💡 **Best Practice**: Enable Cloudflare proxy after DNS propagation for additional DDoS protection, CDN benefits, and enhanced security features.
+
 ## ✨ Current Features
 
 - ✅ **Automated Infrastructure Provisioning** – Complete resource deployment using Bicep templates
@@ -234,6 +331,8 @@ The DNS Private Resolver automatically handles name resolution for:
 - ✅ **Virtual Network Security** – Isolated network architecture with private endpoint connectivity
 - ✅ **Hybrid Connectivity** – Point-to-Site VPN Gateway with Azure AD authentication for secure on-premises access
 - ✅ **DNS Resolution** – Azure DNS Private Resolver for seamless name resolution between networks
+- ✅ **Custom Domain Support** – Automated custom domain configuration with Azure-managed SSL certificates
+- ✅ **Cloudflare Integration** – Specialized scripts for automated Cloudflare DNS record management
 - ✅ **Container-Based Hosting** – Modern Linux container deployment on Azure App Service, with secrets injected securely from Key Vault
 - ✅ **Local Development Setup** – Docker Compose configuration for streamlined local development and testing
 - ✅ **Application Monitoring** – Azure Application Insights integration for comprehensive observability
@@ -249,7 +348,8 @@ The following enhancements are planned to expand and improve the platform:
 ### 🔐 Security & Configuration
 
 - **✅ Secrets Management** – Azure Key Vault integration for secure credential handling (**Completed**)
-- **🌐 Custom Domains** – Support for custom domain configuration via Bicep automation
+- **✅ Custom Domains** – Support for custom domain configuration via Bicep automation (**Completed**)
+- **✅ Cloudflare DNS Management** – Automated DNS record creation and proxy configuration (**Completed**)
 - **🛡️ Access Control** – IP whitelisting and Entra ID managed identity integration
 - **🔒 Site-to-Site VPN** – Extension to support site-to-site VPN connections for branch offices
 - **📡 ExpressRoute Integration** – Support for dedicated network connections via Azure ExpressRoute

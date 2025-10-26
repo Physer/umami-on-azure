@@ -49,3 +49,4 @@ resource dockerAppService 'Microsoft.Web/sites@2024-11-01' = {
 
 output resourceId string = dockerAppService.id
 output principalId string = dockerAppService.identity.principalId
+output defaultHostName string = dockerAppService.properties.defaultHostName

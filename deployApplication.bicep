@@ -73,6 +73,14 @@ module postgresDatabase 'modules/postgres.bicep' = {
 }
 
 // App Services
+module appServicePrivateDns 'modules/privateDnsZone.bicep' = {
+  name: 'deployAppServicePrivateDns'
+  params: {
+    privateDnsZoneFqdn: 'privatelink.azurewebsites.net'
+    virtualNetworkName: virtualNetworkName
+  }
+}
+
 module appServicePlan 'modules/appServicePlan.bicep' = {
   name: 'deployAppServicePlan'
   params: {
@@ -168,6 +176,15 @@ module pgAdminPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPgAdmi
     groupIds: [
       'sites'
     ]
+  }
+}
+
+module pgAdminPrivateDnsARecord 'modules/privateDnsARecord.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
+  name: 'deployPgAdminPrivateDnsARecord'
+  params: {
+    privateDnsZoneFqdn: appServicePrivateDns!.outputs.resourceName
+    networkInterfaceName: pgAdminPrivateEndpoint!.outputs.privateEndpointNetworkInterfaceName
+    dnsRecordName: replace(pgAdminAppService!.outputs.defaultHostName, '.azurewebsites.net', '')
   }
 }
 

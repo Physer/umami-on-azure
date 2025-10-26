@@ -4,6 +4,7 @@ param applicationName string
 param keyVaultSubnetName string
 param postgresSubnetName string
 param appServiceSubnetName string
+param pgAdminAppServicePrivateEndpointSubnetName string
 param vpnSubnetName string
 param dnsPrivateResolverInboundSubnetName string
 param dnsPrivateResolverOutboundSubnetName string
@@ -90,6 +91,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' = {
               }
             }
           ]
+        }
+      }
+      {
+        name: pgAdminAppServicePrivateEndpointSubnetName
+        properties: {
+          addressPrefix: '10.0.7.0/24'
         }
       }
     ]

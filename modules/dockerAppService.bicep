@@ -47,4 +47,5 @@ resource dockerAppService 'Microsoft.Web/sites@2024-11-01' = {
   kind: 'app,linux,container'
 }
 
+output resourceId string = dockerAppService.id
 output principalId string = dockerAppService.identity.principalId

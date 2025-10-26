@@ -22,6 +22,7 @@ param keyVaultName string
 param virtualNetworkName string
 param postgresSubnetName string
 param appServiceSubnetName string
+param pgAdminAppServicePrivateEndpointSubnetName string
 
 // Key Vault secret names
 var databaseUsernameSecretName = 'postgresDatabaseUsername'
@@ -157,6 +158,19 @@ module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin &&
   }
 }
 
+module pgAdminPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
+  name: 'deployPgAdminPrivateEndpoint'
+  params: {
+    privateEndpointName: 'pe-${pgAdminAppServiceName!}'
+    virtualNetworkName: virtualNetworkName
+    subnetName: pgAdminAppServicePrivateEndpointSubnetName
+    resourceIdToLink: pgAdminAppService!.outputs.resourceId
+    groupIds: [
+      'sites'
+    ]
+  }
+}
+
 // Role Assignments
 module umamiAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVaultRoleAssignment.bicep' = {
   name: 'deployUmamiAppServiceKeyVaultRoleAssignment'
@@ -171,7 +185,7 @@ module pgAdminAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVault
   name: 'deployPgAdminAppServiceKeyVaultRoleAssignment'
   params: {
     keyVaultName: keyVaultName
-    principalId: (deployPgAdmin && !empty(pgAdminAppServiceName)) ? pgAdminAppService.outputs.principalId : ''
+    principalId: pgAdminAppService!.outputs.principalId
     roleDefinitionId: keyVaultSecretsUserRoleDefinitionId
   }
 }

@@ -7,6 +7,7 @@ var environment = 'local'
 param umamiDatabaseName = 'umami'
 param appServiceSubnetName = 'snet-appservice'
 param postgresSubnetName = 'snet-postgres'
+param pgAdminAppServicePrivateEndpointSubnetName = 'snet-pgadmin-pe'
 
 // Environment-specific parameters
 param appServicePlanSkuTier = 'Basic'

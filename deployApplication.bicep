@@ -22,6 +22,7 @@ param keyVaultName string
 param virtualNetworkName string
 param postgresSubnetName string
 param appServiceSubnetName string
+param pgAdminAppServicePrivateEndpointSubnetName string
 
 // Key Vault secret names
 var databaseUsernameSecretName = 'postgresDatabaseUsername'
@@ -72,6 +73,14 @@ module postgresDatabase 'modules/postgres.bicep' = {
 }
 
 // App Services
+module appServicePrivateDns 'modules/privateDnsZone.bicep' = {
+  name: 'deployAppServicePrivateDns'
+  params: {
+    privateDnsZoneFqdn: 'privatelink.azurewebsites.net'
+    virtualNetworkName: virtualNetworkName
+  }
+}
+
 module appServicePlan 'modules/appServicePlan.bicep' = {
   name: 'deployAppServicePlan'
   params: {
@@ -92,6 +101,7 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
     appServiceName: umamiAppServiceName
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
+    publicNetworkAccess: 'Enabled'
     appSettings: [
       {
         name: 'DATABASE_TYPE'
@@ -152,6 +162,29 @@ module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin &&
     imageTag: 'latest'
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
+    publicNetworkAccess: 'Disabled'
+  }
+}
+
+module pgAdminPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
+  name: 'deployPgAdminPrivateEndpoint'
+  params: {
+    privateEndpointName: 'pe-${pgAdminAppServiceName!}'
+    virtualNetworkName: virtualNetworkName
+    subnetName: pgAdminAppServicePrivateEndpointSubnetName
+    resourceIdToLink: pgAdminAppService!.outputs.resourceId
+    groupIds: [
+      'sites'
+    ]
+  }
+}
+
+module pgAdminPrivateDnsARecord 'modules/privateDnsARecord.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
+  name: 'deployPgAdminPrivateDnsARecord'
+  params: {
+    privateDnsZoneFqdn: appServicePrivateDns!.outputs.resourceName
+    networkInterfaceName: pgAdminPrivateEndpoint!.outputs.privateEndpointNetworkInterfaceName
+    dnsRecordName: replace(pgAdminAppService!.outputs.defaultHostName, '.azurewebsites.net', '')
   }
 }
 
@@ -169,7 +202,7 @@ module pgAdminAppServiceKeyVaultRoleAssignment 'modules/roleAssignments/keyVault
   name: 'deployPgAdminAppServiceKeyVaultRoleAssignment'
   params: {
     keyVaultName: keyVaultName
-    principalId: (deployPgAdmin && !empty(pgAdminAppServiceName)) ? pgAdminAppService.outputs.principalId : ''
+    principalId: pgAdminAppService!.outputs.principalId
     roleDefinitionId: keyVaultSecretsUserRoleDefinitionId
   }
 }

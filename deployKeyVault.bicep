@@ -11,9 +11,19 @@ module keyVault 'modules/keyVault.bicep' = {
   name: 'deployVault'
   params: {
     keyVaultName: keyVaultName
-    keyVaultPrivateEndpointName: keyVaultPrivateEndpointName
+  }
+}
+
+module keyVaultPrivateEndpoint 'modules/privateEndpoint.bicep' = {
+  name: 'deployKeyVaultPrivateEndpoint'
+  params: {
+    privateEndpointName: keyVaultPrivateEndpointName
     virtualNetworkName: virtualNetworkName
     subnetName: keyVaultSubnetName
+    resourceIdToLink: keyVault.outputs.resourceId
+    groupIds: [
+      'vault'
+    ]
   }
 }
 
@@ -29,7 +39,7 @@ module keyVaultPrivateDnsARecord 'modules/privateDnsARecord.bicep' = {
   name: 'deployKeyVaultPrivateDnsARecord'
   params: {
     privateDnsZoneFqdn: keyVaultPrivateDns.outputs.resourceName
-    networkInterfaceName: keyVault.outputs.privateEndpointNetworkInterfaceName
+    networkInterfaceName: keyVaultPrivateEndpoint.outputs.privateEndpointNetworkInterfaceName
     dnsRecordName: keyVaultName
   }
 }

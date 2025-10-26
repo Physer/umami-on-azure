@@ -1,4 +1,3 @@
 # Environment files
 .env*
-!.env.example
-!.env.keyvault.example
+!.env.*.example

@@ -8,6 +8,7 @@ param pgAdminAppServicePrivateEndpointSubnetName string
 param vpnSubnetName string
 param dnsPrivateResolverInboundSubnetName string
 param dnsPrivateResolverOutboundSubnetName string
+param redisSubnetName string
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' = {
   name: applicationName
@@ -97,6 +98,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' = {
         name: pgAdminAppServicePrivateEndpointSubnetName
         properties: {
           addressPrefix: '10.0.7.0/24'
+        }
+      }
+      {
+        name: redisSubnetName
+        properties: {
+          addressPrefix: '10.0.8.0/24'
         }
       }
     ]

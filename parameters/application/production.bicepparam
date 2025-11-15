@@ -8,6 +8,10 @@ param umamiDatabaseName = 'umami'
 param appServiceSubnetName = 'snet-appservice'
 param postgresSubnetName = 'snet-postgres'
 param pgAdminAppServicePrivateEndpointSubnetName = 'snet-pgadmin-pe'
+param umamiDockerImageName = 'ghcr.io/umami-software/umami'
+param umamiDockerImageTag = 'postgresql-v2'
+param pgAdminDockerImageName = 'dpage/pgadmin4'
+param pgAdminDockerImageTag = '9'
 
 // Environment-specific parameters
 param appServicePlanSkuTier = 'Basic'

@@ -7,6 +7,9 @@ param umamiAppServiceName string
 param deployPgAdmin bool
 param pgAdminAppServiceName string?
 
+// Redis parameters
+param redisName string
+
 // Database parameters
 param postgresServerName string
 param umamiDatabaseName string
@@ -29,6 +32,7 @@ param virtualNetworkName string
 param postgresSubnetName string
 param appServiceSubnetName string
 param pgAdminAppServicePrivateEndpointSubnetName string
+param redisSubnetName string
 
 // Key Vault secret names
 var databaseUsernameSecretName = 'postgresDatabaseUsername'
@@ -52,6 +56,16 @@ module monitoring 'modules/monitoring.bicep' = {
   params: {
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
     applicationInsightsName: applicationInsightsName
+  }
+}
+
+// Redis cache
+module redis 'modules/redis.bicep' = {
+  name: 'deployRedisCache'
+  params: {
+    redisName: redisName
+    virtualNetworkName: virtualNetworkName
+    subnetName: redisSubnetName
   }
 }
 

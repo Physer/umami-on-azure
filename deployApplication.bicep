@@ -11,6 +11,12 @@ param pgAdminAppServiceName string?
 param postgresServerName string
 param umamiDatabaseName string
 
+// Docker parameters
+param umamiDockerImageName string
+param umamiDockerImageTag string
+param pgAdminDockerImageName string
+param pgAdminDockerImageTag string
+
 // Monitoring parameters
 param logAnalyticsWorkspaceName string
 param applicationInsightsName string
@@ -96,8 +102,8 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
   name: 'deployUmamiAppService'
   params: {
     appServicePlanId: appServicePlan.outputs.resourceId
-    imageName: 'ghcr.io/umami-software/umami'
-    imageTag: 'postgresql-latest'
+    imageName: umamiDockerImageName
+    imageTag: umamiDockerImageTag
     appServiceName: umamiAppServiceName
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
@@ -158,8 +164,8 @@ module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin &&
         value: 'Recommended'
       }
     ]
-    imageName: 'dpage/pgadmin4'
-    imageTag: 'latest'
+    imageName: pgAdminDockerImageName
+    imageTag: pgAdminDockerImageTag
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
     publicNetworkAccess: 'Disabled'

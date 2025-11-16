@@ -64,8 +64,27 @@ module redis 'modules/redis.bicep' = {
   name: 'deployRedisCache'
   params: {
     redisName: redisName
+  }
+}
+
+module redisPrivateEndpoint 'modules/privateEndpoint.bicep' = {
+  name: 'deployRedisPrivateEndpoint'
+  params: {
+    privateEndpointName: 'pe-${redisName}'
     virtualNetworkName: virtualNetworkName
     subnetName: redisSubnetName
+    resourceIdToLink: redis.outputs.resourceId
+    groupIds: [
+      'redisCache'
+    ]
+  }
+}
+
+module redisPrivateDnsZone 'modules/privateDnsZone.bicep' = {
+  name: 'deployRedisPrivateDnsZone'
+  params: {
+    privateDnsZoneFqdn: 'privatelink.redis.cache.windows.net'
+    virtualNetworkName: virtualNetworkName
   }
 }
 

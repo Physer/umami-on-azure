@@ -11,6 +11,7 @@ param postgresSubnetName = 'snet-postgres'
 param dnsPrivateResolverInboundSubnetName = 'snet-dns-inbound'
 param dnsPrivateResolverOutboundSubnetName = 'snet-dns-outbound'
 param pgAdminAppServicePrivateEndpointSubnetName = 'snet-pgadmin-pe'
+param redisSubnetName = 'snet-redis'
 
 // Environment-specific parameters
 param virtualNetworkName = 'vnet-analytics-${environment}'

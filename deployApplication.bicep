@@ -67,13 +67,20 @@ module redis 'modules/redis.bicep' = {
   }
 }
 
+resource redisReference 'Microsoft.Cache/redis@2024-11-01' existing = {
+  name: redisName
+  dependsOn: [
+    redis
+  ]
+}
+
 module redisPrivateEndpoint 'modules/privateEndpoint.bicep' = {
   name: 'deployRedisPrivateEndpoint'
   params: {
     privateEndpointName: 'pe-${redisName}'
     virtualNetworkName: virtualNetworkName
     subnetName: redisSubnetName
-    resourceIdToLink: redis.outputs.resourceId
+    resourceIdToLink: redisReference.id
     groupIds: [
       'redisCache'
     ]
@@ -165,6 +172,10 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
       {
         name: 'XDT_MicrosoftApplicationInsights_Mode'
         value: 'Recommended'
+      }
+      {
+        name: 'REDIS_URL'
+        value: 'redis://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.sslPort}'
       }
     ]
   }

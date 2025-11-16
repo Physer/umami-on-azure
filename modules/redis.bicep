@@ -16,5 +16,3 @@ resource redis 'Microsoft.Cache/redis@2024-11-01' = {
     publicNetworkAccess: 'Disabled'
   }
 }
-
-output resourceId string = redis.id

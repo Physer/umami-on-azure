@@ -13,6 +13,7 @@ param umamiDockerImageTag = 'postgresql-v2'
 param pgAdminDockerImageName = 'dpage/pgadmin4'
 param pgAdminDockerImageTag = '9'
 param redisSubnetName = 'snet-redis'
+param redisUrlSecretName = 'redisUrl'
 
 // Environment-specific parameters
 param appServicePlanSkuTier = 'Basic'

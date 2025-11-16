@@ -12,6 +12,8 @@ param umamiDockerImageName = 'ghcr.io/umami-software/umami'
 param umamiDockerImageTag = 'postgresql-v2'
 param pgAdminDockerImageName = 'dpage/pgadmin4'
 param pgAdminDockerImageTag = '9'
+param redisSubnetName = 'snet-redis'
+param redisUrlSecretName = 'redisUrl'
 
 // Environment-specific parameters
 param appServicePlanSkuTier = 'Basic'
@@ -24,6 +26,7 @@ param virtualNetworkName = 'vnet-analytics-${environment}'
 param applicationInsightsName = 'appi-analytics-${environment}'
 param logAnalyticsWorkspaceName = 'log-analytics-${environment}'
 param keyVaultName = 'kv-analytics-${environment}'
+param redisName = 'redis-analytics-${environment}'
 
 // Admin tools parameters
 param deployPgAdmin = false

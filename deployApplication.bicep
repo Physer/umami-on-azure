@@ -9,6 +9,7 @@ param pgAdminAppServiceName string?
 
 // Redis parameters
 param redisName string
+param redisUrlSecretName string
 
 // Database parameters
 param postgresServerName string
@@ -72,6 +73,15 @@ resource redisReference 'Microsoft.Cache/redis@2024-11-01' existing = {
   dependsOn: [
     redis
   ]
+}
+
+module redisUrlSecret 'modules/keyVaultSecret.bicep' = {
+  name: 'deployRedisUrlSecret'
+  params: {
+    keyVaultName: keyVaultName
+    secretName: redisUrlSecretName
+    secretValue: 'redis://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.sslPort}'
+  }
 }
 
 module redisPrivateEndpoint 'modules/privateEndpoint.bicep' = {
@@ -175,7 +185,7 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
       }
       {
         name: 'REDIS_URL'
-        value: 'redis://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.sslPort}'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${redisUrlSecretName})'
       }
     ]
   }

@@ -4,53 +4,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Umami example implementation</title>
+    <title>Umami Example Implementation</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.6;
+        }
+
+        textarea {
+            width: 100%;
+            font-family: monospace;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('trigger-button').addEventListener('click', triggerRequest);
+        });
+
+        function triggerRequest() {
+            const scriptTag = document.getElementById('umami-script').value;
+            if (!scriptTag) {
+                alert('Please enter a valid Umami script tag.');
+                return;
+            }
+
+            // Parse the script tag to extract the src and data-website-id attributes
+            const temporaryElement = document.createElement('div');
+            temporaryElement.innerHTML = scriptTag.trim();
+            const scriptElement = temporaryElement.querySelector('script');
+
+            if (!scriptElement) {
+                alert('Invalid script tag.');
+                return;
+            }
+
+            const src = scriptElement.getAttribute('src');
+            const websiteId = scriptElement.getAttribute('data-website-id');
+
+            // Remove any existing script with the same src and data-website-id
+            document.head.querySelectorAll('script').forEach(s => {
+                if (s.getAttribute('src') === src && s.getAttribute('data-website-id') === websiteId) {
+                    s.remove();
+                }
+            });
+
+            // Add the new script tag
+            const umamiScript = document.createElement('script');
+            umamiScript.defer = true;
+            umamiScript.src = src;
+            umamiScript.setAttribute('data-website-id', websiteId);
+            document.head.appendChild(umamiScript);
+            alert('Umami script added and request triggered.');
+        }
+    </script>
 </head>
 
 <body>
-    <h1>Umami Example Implementation</h1>
-    <p>This is an example page demonstrating the integration of Umami analytics.</p>
+    <main>
+        <h1>Umami Example Implementation</h1>
+        <p>This is an example page demonstrating the integration of Umami analytics.</p>
 
-    <p>Enter Umami script tag (e.g. &lt;script defer src=&quot;http://localhost:3000/script.js&quot;
-        data-website-id=&quot;42d18f31-1f24-417e-9ff4-7d29aeeff4d7&quot;&gt;&lt;/script&gt;):</p>
-    <textarea id="umami-script" rows="2" cols="120"></textarea>
-    <br />
-    <button onclick="triggerRequest()">Trigger request</button>
+        <label for="umami-script">
+            Enter Umami script tag (e.g.
+            <code>&lt;script defer src="http://localhost:3000/script.js" data-website-id="42d18f31-1f24-417e-9ff4-7d29aeeff4d7"&gt;&lt;/script&gt;</code>):
+        </label>
+        <textarea id="umami-script" rows="3"></textarea>
+        <button id="trigger-button">Trigger Request</button>
+    </main>
 </body>
-
-<script type="text/javascript">
-    function triggerRequest() {
-        const scriptTag = document.getElementById('umami-script').value;
-        if (!scriptTag) {
-            window.alert('Please enter a valid Umami script tag.');
-            return;
-        }
-
-        // Parse the script tag to extract the src and data-website-id attributes
-        const temporaryElement = document.createElement('div');
-        temporaryElement.innerHTML = scriptTag.trim();
-        const scriptElement = temporaryElement.querySelector('script');
-        if (!scriptElement) {
-            window.alert('Invalid script tag.');
-            return;
-        }
-        const src = scriptElement.getAttribute('src');
-        const websiteId = scriptElement.getAttribute('data-website-id');
-
-        // Remove any existing script with the same src and data-website-id
-        Array.from(document.head.querySelectorAll('script')).forEach(s => {
-            if (s.getAttribute('src') === src && s.getAttribute('data-website-id') === websiteId) {
-                s.remove();
-            }
-        });
-
-        // Add the new script tag
-        const umamiScript = document.createElement('script');
-        umamiScript.defer = true;
-        umamiScript.src = src;
-        umamiScript.setAttribute('data-website-id', websiteId);
-        document.head.appendChild(umamiScript);
-    }
-</script>
 
 </html>

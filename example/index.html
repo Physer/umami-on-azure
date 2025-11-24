@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umami example implementation</title>
+</head>
+
+<body>
+    <h1>Umami Example Implementation</h1>
+    <p>This is an example page demonstrating the integration of Umami analytics.</p>
+
+    <p>Enter Umami script tag (e.g. &lt;script defer src=&quot;http://localhost:3000/script.js&quot;
+        data-website-id=&quot;42d18f31-1f24-417e-9ff4-7d29aeeff4d7&quot;&gt;&lt;/script&gt;):</p>
+    <textarea id="umami-script" rows="2" cols="120"></textarea>
+    <br />
+    <button onclick="triggerRequest()">Trigger request</button>
+</body>
+
+<script type="text/javascript">
+    function triggerRequest() {
+        const scriptTag = document.getElementById('umami-script').value;
+        if (!scriptTag) {
+            window.alert('Please enter a valid Umami script tag.');
+            return;
+        }
+
+        // Parse the script tag to extract the src and data-website-id attributes
+        const temporaryElement = document.createElement('div');
+        temporaryElement.innerHTML = scriptTag.trim();
+        const scriptElement = temporaryElement.querySelector('script');
+        if (!scriptElement) {
+            window.alert('Invalid script tag.');
+            return;
+        }
+        const src = scriptElement.getAttribute('src');
+        const websiteId = scriptElement.getAttribute('data-website-id');
+
+        // Remove any existing script with the same src and data-website-id
+        Array.from(document.head.querySelectorAll('script')).forEach(s => {
+            if (s.getAttribute('src') === src && s.getAttribute('data-website-id') === websiteId) {
+                s.remove();
+            }
+        });
+
+        // Add the new script tag
+        const umamiScript = document.createElement('script');
+        umamiScript.defer = true;
+        umamiScript.src = src;
+        umamiScript.setAttribute('data-website-id', websiteId);
+        document.head.appendChild(umamiScript);
+    }
+</script>
+
+</html>

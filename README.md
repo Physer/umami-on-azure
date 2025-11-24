@@ -41,7 +41,7 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
 2. **Deploy the Networking Infrastructure**
 
    ```pwsh
-   az deployment sub create --location <your-azure-region> -f ./deployNetwork.bicep -p ./parameters/network/local.bicepparam
+   az deployment sub create --location <your-azure-region> -f ./umami/deployNetwork.bicep -p ./umami/parameters/network/local.bicepparam
    ```
 
    > Replace `<your-azure-region>` with your preferred Azure region (e.g., `swedencentral`)
@@ -49,7 +49,7 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
 3. **Deploy the Azure Key Vault**
 
    ```pwsh
-   az deployment sub create --location <your-azure-region> -f ./deployKeyVault.bicep -p ./parameters/keyvault/local.bicepparam
+   az deployment sub create --location <your-azure-region> -f ./umami/deployKeyVault.bicep -p ./umami/parameters/keyvault/local.bicepparam
    ```
 
 4. **Upload Secrets to Azure Key Vault**
@@ -57,7 +57,7 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
    After Key Vault is deployed, upload your secrets before deploying the application infrastructure:
 
    ```bash
-   ./sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
+   ./umami/sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
    ```
 
    > Fill in `.env.keyvault` with your secret values before running the script.
@@ -65,7 +65,7 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
 5. **Deploy the Application Infrastructure**
 
    ```pwsh
-   az deployment sub create --location <your-azure-region> -f ./deployApplication.bicep -p ./parameters/application/local.bicepparam
+   az deployment sub create --location <your-azure-region> -f ./umami/deployApplication.bicep -p ./umami/parameters/application/local.bicepparam
    ```
 
 6. **Configure Custom Domain (Optional)**
@@ -74,7 +74,7 @@ This solution is perfect for organizations seeking enterprise-grade analytics wi
 
    ```pwsh
    # Deploy custom domain configuration
-   az deployment group create --resource-group <your-resource-group> -f ./deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
+   az deployment group create --resource-group <your-resource-group> -f ./umami/deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
    ```
 
    For Cloudflare DNS management, see the [Custom Domain Setup](#-custom-domain-setup) section below.
@@ -105,8 +105,8 @@ For local development and testing, you can run Umami using Docker Compose. The D
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/Physer/umami-setup
-   cd umami-setup
+   git clone https://github.com/Physer/umami-on-azure
+   cd umami-on-azure
    ```
 
 2. **Configure environment variables**
@@ -116,9 +116,11 @@ For local development and testing, you can run Umami using Docker Compose. The D
    ```
 
    Edit the `.env` file with your configuration:
-   - Set database credentials
-   - Configure application settings
-   - Adjust any other environment-specific variables
+   - `UMAMI_DATABASE_NAME`: Name of the PostgreSQL database
+   - `UMAMI_DATABASE_USER`: Database user for Umami
+   - `UMAMI_DATABASE_PASSWORD`: Password for the database user
+   - `UMAMI_APP_SECRET`: Secret key for signing cookies and tokens (use a long random string)
+   - `EXAMPLE_IMPLEMENTATION_PORT`: Port for the example implementation (default: 8080)
 
 3. **Start the services**
 
@@ -126,15 +128,123 @@ For local development and testing, you can run Umami using Docker Compose. The D
    docker compose up -d
    ```
 
+   This will start three services:
+   - **Umami application** on `http://localhost:3000`
+   - **PostgreSQL database** for data storage
+   - **Example implementation** on `http://localhost:8080` (or your configured port)
+
 4. **Access Umami**
 
    Once started, Umami will be available at `http://localhost:3000`
 
-5. **Stop the services**
+   Default credentials:
+   - Username: `admin`
+   - Password: `umami`
+
+   > ⚠️ **Important**: Change the default password immediately after first login
+
+5. **Test with Example Implementation**
+
+   The included example implementation provides a simple test page to verify your Umami tracking integration:
+
+   **Step-by-step guide:**
+
+   a. **Set up a website in Umami**
+      - Open Umami dashboard at `http://localhost:3000`
+      - Log in with default credentials (`admin` / `umami`)
+      - Navigate to Settings → Websites → Add Website
+      - Enter a name (e.g., "Test Site") and domain (e.g., "localhost")
+      - Click "Save" to create the website
+
+   b. **Get the tracking script**
+      - Click on your newly created website
+      - Click the "Edit" button
+      - Find the "Tracking code" section
+      - Copy the complete script tag (looks like: `<script defer src="http://localhost:3000/script.js" data-website-id="YOUR-ID"></script>`)
+
+   c. **Test the tracking**
+      - Open the example implementation at `http://localhost:8080` (or your configured `EXAMPLE_IMPLEMENTATION_PORT`)
+      - Paste the tracking script into the text area
+      - Click "Trigger Request" button
+      - You should see a confirmation alert
+
+   d. **Verify the analytics**
+      - Return to the Umami dashboard
+      - Navigate to your website's dashboard
+      - You should see the page view recorded in real-time
+      - Check the "Realtime" tab to see active visitors
+
+   **What's happening behind the scenes:**
+
+   The example implementation is a lightweight HTML page served by Nginx that:
+   - Dynamically loads your Umami tracking script
+   - Simulates a real website integration
+   - Triggers page view events when you click the button
+   - Demonstrates the minimal code needed to integrate Umami
+
+   This setup allows you to test and validate your Umami configuration before deploying to production or integrating into your actual websites.
+
+6. **Stop the services**
 
    ```bash
    docker compose down
    ```
+
+   To remove all data including the database volume:
+
+   ```bash
+   docker compose down -v
+   ```
+
+### Example Implementation Details
+
+The example implementation is a simple HTML/JavaScript application designed to help you test and understand Umami's tracking integration.
+
+#### Architecture
+
+The Docker Compose setup includes three containers:
+
+1. **Umami App** (`umami-app`): The main analytics application
+2. **PostgreSQL Database** (`umami-database`): Data storage for analytics
+3. **Example Implementation** (`umami-example-implementation`): A test website served by Nginx
+
+#### How It Works
+
+The example implementation (`example/index.html`) demonstrates:
+
+- **Dynamic Script Loading**: Shows how to programmatically add the Umami tracking script to any webpage
+- **Event Triggering**: Demonstrates how page views are automatically tracked once the script is loaded
+- **Minimal Integration**: Requires only a single script tag in your HTML to start tracking
+
+#### Technical Implementation
+
+The example page includes JavaScript that:
+
+1. Accepts your Umami tracking script via a textarea
+2. Parses the script tag to extract the `src` URL and `data-website-id` attribute
+3. Removes any previously loaded Umami scripts (for testing multiple configurations)
+4. Dynamically injects the new script into the page's `<head>` section
+5. Triggers an automatic page view event when the script loads
+
+#### Use Cases
+
+- **Testing**: Verify your Umami installation is working correctly
+- **Development**: Test tracking configurations before production deployment
+- **Learning**: Understand how to integrate Umami into your own applications
+- **Debugging**: Troubleshoot tracking issues in a controlled environment
+
+#### Customizing the Example
+
+You can modify `example/index.html` to test additional Umami features:
+
+- **Custom Events**: Add buttons to trigger custom events
+- **Multiple Page Views**: Create navigation to test multi-page tracking
+- **User Properties**: Test tracking with different user attributes
+- **Event Properties**: Experiment with custom event data
+
+Simply edit the HTML file and refresh your browser - no need to restart Docker Compose.
+
+---
 
 ## 🔐 Secrets Management with Azure Key Vault
 
@@ -146,7 +256,7 @@ Secrets are not stored in source control or parameter files, but are managed dir
 
 - Secrets required by Umami (such as database credentials, API keys, etc.) are stored in Azure Key Vault.
 - The infrastructure and App Service are configured to reference these secrets securely using managed identity.
-- A helper script, [`sync-keyvault-secrets.sh`](./sync-keyvault-secrets.sh), is provided to automate uploading secrets from a local file to your Azure Key Vault.
+- A helper script, [`sync-keyvault-secrets.sh`](./umami/sync-keyvault-secrets.sh), is provided to automate uploading secrets from a local file to your Azure Key Vault.
 
 ### Using the Key Vault Sync Script
 
@@ -156,7 +266,7 @@ You can quickly sync secrets from a local `.env.keyvault` file to your Azure Key
 
 #### 1. Prepare Your Secrets File
 
-Copy the provided `.env.keyvault.example` file to `.env.keyvault` in the project root. Each line should be in `KEY=VALUE` format. The example file lists all required secret keys—fill in the values for your environment.
+Copy the provided `.env.keyvault.example` file to `.env.keyvault` in the `umami/` directory. Each line should be in `KEY=VALUE` format. The example file lists all required secret keys—fill in the values for your environment.
 
 #### 2. Run the Sync Script
 
@@ -169,13 +279,13 @@ az login
 Then run the script, specifying your Key Vault name (and optionally the env file):
 
 ```bash
-./sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
+./umami/sync-keyvault-secrets.sh <your-keyvault-name> [.env.keyvault]
 ```
 
 Example:
 
 ```bash
-./sync-keyvault-secrets.sh my-keyvault-dev
+./umami/sync-keyvault-secrets.sh my-keyvault-dev
 ```
 
 The script will upload each secret to the specified Key Vault. It will report any failures and a summary at the end.
@@ -259,7 +369,7 @@ The infrastructure supports custom domain configuration with automated SSL certi
 2. **Deploy Custom Domain Infrastructure**
 
    ```pwsh
-   az deployment group create --resource-group <your-resource-group> -f ./deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
+   az deployment group create --resource-group <your-resource-group> -f ./umami/deployCustomDomains.bicep --parameters umamiAppServiceName=<your-app-service-name> customDomainName=<your-domain.com>
    ```
 
 3. **Configure DNS Records**
@@ -268,15 +378,15 @@ The infrastructure supports custom domain configuration with automated SSL certi
 
    ```bash
    # Create .env.cloudflare from the example template
-   cp .env.cloudflare.example .env.cloudflare
+   cp umami/.env.cloudflare.example umami/.env.cloudflare
    
-   # Edit .env.cloudflare with your Cloudflare API token and Zone ID
+   # Edit umami/.env.cloudflare with your Cloudflare API token and Zone ID
    
    # Create/update DNS record pointing to your App Service
-   ./create-cloudflare-dns-records.sh <your-domain.com> CNAME <your-app-service>.azurewebsites.net
+   ./umami/create-cloudflare-dns-records.sh <your-domain.com> CNAME <your-app-service>.azurewebsites.net
    
    # Enable Cloudflare proxy (optional)
-   ./proxy-cloudflare-dns-records.sh <your-domain.com> on
+   ./umami/proxy-cloudflare-dns-records.sh <your-domain.com> on
    ```
 
 ### Cloudflare Integration
@@ -291,15 +401,15 @@ The project includes specialized scripts for Cloudflare DNS management:
 
 #### DNS Management Scripts
 
-- **`create-cloudflare-dns-records.sh`**: Creates or updates DNS records (CNAME, A, etc.)
-- **`proxy-cloudflare-dns-records.sh`**: Toggles Cloudflare proxy status for enhanced security and performance
+- **`umami/create-cloudflare-dns-records.sh`**: Creates or updates DNS records (CNAME, A, etc.)
+- **`umami/proxy-cloudflare-dns-records.sh`**: Toggles Cloudflare proxy status for enhanced security and performance
 
 #### Configuration
 
 1. **Create Cloudflare Configuration**
 
    ```bash
-   cp .env.cloudflare.example .env.cloudflare
+   cp umami/.env.cloudflare.example umami/.env.cloudflare
    ```
 
 2. **Edit Configuration File**
@@ -314,10 +424,10 @@ The project includes specialized scripts for Cloudflare DNS management:
 
    ```bash
    # Create a CNAME record
-   ./create-cloudflare-dns-records.sh subdomain.yourdomain.com CNAME your-app-service.azurewebsites.net
+   ./umami/create-cloudflare-dns-records.sh subdomain.yourdomain.com CNAME your-app-service.azurewebsites.net
    
    # Enable Cloudflare proxy for additional security
-   ./proxy-cloudflare-dns-records.sh subdomain.yourdomain.com on
+   ./umami/proxy-cloudflare-dns-records.sh subdomain.yourdomain.com on
    ```
 
 > 💡 **Best Practice**: Enable Cloudflare proxy after DNS propagation for additional DDoS protection, CDN benefits, and enhanced security features.
@@ -335,6 +445,7 @@ The project includes specialized scripts for Cloudflare DNS management:
 - ✅ **Cloudflare Integration** – Specialized scripts for automated Cloudflare DNS record management
 - ✅ **Container-Based Hosting** – Modern Linux container deployment on Azure App Service, with secrets injected securely from Key Vault
 - ✅ **Local Development Setup** – Docker Compose configuration for streamlined local development and testing
+- ✅ **Example Implementation** – Simple HTML/JavaScript example for testing Umami tracking integration
 - ✅ **Application Monitoring** – Azure Application Insights integration for comprehensive observability
 
 ## 🛣️ Roadmap

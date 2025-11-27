@@ -10,7 +10,7 @@ services:
       DATABASE_URL: postgresql://${UMAMI_DATABASE_USER}:${UMAMI_DATABASE_PASSWORD}@db:5432/${UMAMI_DATABASE_NAME}
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://client:P@ssw0rd!@redis:6379
     depends_on:
       db:
         condition: service_healthy
@@ -36,12 +36,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
   redis:
     image: redis:alpine
     container_name: umami-redis-cache
     restart: always
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - 6379:6379
+    command: ["/usr/local/etc/redis/redis.conf"]
 
   example-implementation:
     image: nginx:alpine

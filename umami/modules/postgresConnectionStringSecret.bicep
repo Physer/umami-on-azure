@@ -15,6 +15,6 @@ resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2025-05-01' = {
   name: secretName
   parent: keyVault
   properties: {
-    value: 'postgresql://${umamiDatabaseUsername}:${umamiDatabasePassword}@${postgresServerName}.private.postgres.database.azure.com:5432/${umamiDatabaseName}?sslmode=require'
+    value: 'postgresql://${umamiDatabaseUsername}:${umamiDatabasePassword}@${postgresServerName}.postgres.database.azure.com:5432/${umamiDatabaseName}'
   }
 }

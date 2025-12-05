@@ -9,7 +9,6 @@ param pgAdminAppServiceName string?
 
 // Redis parameters
 param redisName string
-param redisUrlSecretName string
 
 // Database parameters
 param postgresServerName string
@@ -42,12 +41,13 @@ var databaseConnectionStringSecretName = 'postgresDatabaseConnectionString'
 var appSecretName = 'umamiAppSecret'
 var pgAdminEmailAddressSecretName = 'pgAdminEmailAddress'
 var pgAdminPasswordSecretName = 'pgAdminPassword'
+var redisUrlSecretName = 'redisUrl'
 
 // Role Assignment Definitions
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 
 // Key Vault
-resource keyVaultReference 'Microsoft.KeyVault/vaults@2024-12-01-preview' existing = {
+resource keyVaultReference 'Microsoft.KeyVault/vaults@2025-05-01' existing = {
   name: keyVaultName
 }
 
@@ -106,6 +106,18 @@ module redisPrivateDnsZone 'modules/privateDnsZone.bicep' = {
 }
 
 // Database
+module postgresDatabaseConnectionStringSecret 'modules/postgresConnectionStringSecret.bicep' = {
+  name: 'deployPostgresDatabaseConnectionStringSecret'
+  params: {
+    keyVaultName: keyVaultName
+    secretName: databaseConnectionStringSecretName
+    umamiDatabaseUsername: keyVaultReference.getSecret(databaseUsernameSecretName)
+    umamiDatabasePassword: keyVaultReference.getSecret(databasePasswordSecretName)
+    postgresServerName: postgresServerName
+    umamiDatabaseName: umamiDatabaseName
+  }
+}
+
 module postgresDatabasePrivateDns 'modules/privateDnsZone.bicep' = {
   name: 'deployPostgresDatabasePrivateDns'
   params: {
@@ -189,6 +201,10 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
       }
     ]
   }
+  dependsOn: [
+    postgresDatabaseConnectionStringSecret
+    redisUrlSecret
+  ]
 }
 
 module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {

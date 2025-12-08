@@ -1,5 +1,3 @@
-import { appSetting } from '../types/appsetting.bicep'
-
 param location string = resourceGroup().location
 
 param appServiceName string
@@ -8,7 +6,6 @@ param virtualNetworkName string
 param subnetName string
 param imageName string
 param imageTag string
-param appSettings appSetting[]
 @allowed([
   'Enabled'
   'Disabled'
@@ -35,7 +32,6 @@ resource dockerAppService 'Microsoft.Web/sites@2024-11-01' = {
     }
     reserved: true
     siteConfig: {
-      appSettings: appSettings
       alwaysOn: true
       http20Enabled: true
       linuxFxVersion: 'DOCKER|${imageName}:${imageTag}'

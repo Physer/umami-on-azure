@@ -201,6 +201,7 @@ module umamiAppServiceAppSettings 'modules/appServiceSettings.bicep' = {
     }
   }
   dependsOn: [
+    umamiAppService
     redisUrlSecret
   ]
 }
@@ -230,6 +231,9 @@ module pgAdminAppServiceAppSettings 'modules/appServiceSettings.bicep' = if (dep
       XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
     }
   }
+  dependsOn: [
+    pgAdminAppService
+  ]
 }
 
 module pgAdminPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {

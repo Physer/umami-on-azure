@@ -10,7 +10,7 @@ param dnsPrivateResolverInboundSubnetName string
 param dnsPrivateResolverOutboundSubnetName string
 param redisSubnetName string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
   name: applicationName
   location: location
   properties: {

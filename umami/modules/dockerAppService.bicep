@@ -12,7 +12,7 @@ param imageTag string
 ])
 param publicNetworkAccess string
 
-resource dockerAppService 'Microsoft.Web/sites@2024-11-01' = {
+resource dockerAppService 'Microsoft.Web/sites@2025-03-01' = {
   name: appServiceName
   location: location
   identity: {

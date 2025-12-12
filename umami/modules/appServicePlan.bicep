@@ -6,7 +6,7 @@ param skuFamily string
 param appServicePlanName string
 param logAnalyticsWorkspaceId string
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2025-03-01' = {
   name: appServicePlanName
   location: location
   sku: {

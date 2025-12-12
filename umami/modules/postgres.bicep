@@ -15,7 +15,7 @@ param administratorUsername string
 @secure()
 param administratorPassword string
 
-resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2025-01-01-preview' = {
+resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2025-08-01' = {
   name: resourceName
   location: location
   sku: {
@@ -54,7 +54,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2025-01-01-pr
   }
 }
 
-resource databaseConfiguration 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2025-01-01-preview' = {
+resource databaseConfiguration 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2025-08-01' = {
   name: 'azure.extensions'
   parent: postgresServer
   properties: {
@@ -63,7 +63,7 @@ resource databaseConfiguration 'Microsoft.DBforPostgreSQL/flexibleServers/config
   }
 }
 
-resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2025-01-01-preview' = {
+resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2025-08-01' = {
   parent: postgresServer
   name: databaseName
 }

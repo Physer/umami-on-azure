@@ -10,7 +10,7 @@ services:
       DATABASE_URL: postgresql://${UMAMI_DATABASE_USER}:${UMAMI_DATABASE_PASSWORD}@db:5432/${UMAMI_DATABASE_NAME}
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      REDIS_URL: rediss://:${REDIS_PASSWORD}@redis:6380
     depends_on:
       db:
         condition: service_healthy
@@ -42,7 +42,7 @@ services:
     container_name: umami-redis-cache
     restart: always
     ports:
-      - 6379:6379
+      - 6380:6380
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
 
   example-implementation:

@@ -14,6 +14,6 @@ resource redis 'Microsoft.Cache/redis@2024-11-01' = {
       family: redisSkuFamily
     }
     publicNetworkAccess: 'Disabled'
-    enableNonSslPort: true
+    enableNonSslPort: false
   }
 }

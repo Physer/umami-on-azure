@@ -80,7 +80,7 @@ module redisUrlSecret 'modules/keyVaultSecret.bicep' = {
   params: {
     keyVaultName: keyVaultName
     secretName: redisUrlSecretName
-    secretValue: 'redis://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.port}'
+    secretValue: 'rediss://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.sslPort}'
   }
 }
 

@@ -7,6 +7,9 @@ param umamiAppServiceName string
 param deployPgAdmin bool
 param pgAdminAppServiceName string?
 
+// Redis parameters
+param redisName string
+
 // Database parameters
 param postgresServerName string
 param umamiDatabaseName string
@@ -29,6 +32,7 @@ param virtualNetworkName string
 param postgresSubnetName string
 param appServiceSubnetName string
 param pgAdminAppServicePrivateEndpointSubnetName string
+param redisSubnetName string
 
 // Key Vault secret names
 var databaseUsernameSecretName = 'postgresDatabaseUsername'
@@ -37,12 +41,13 @@ var databaseConnectionStringSecretName = 'postgresDatabaseConnectionString'
 var appSecretName = 'umamiAppSecret'
 var pgAdminEmailAddressSecretName = 'pgAdminEmailAddress'
 var pgAdminPasswordSecretName = 'pgAdminPassword'
+var redisUrlSecretName = 'redisUrl'
 
 // Role Assignment Definitions
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 
 // Key Vault
-resource keyVaultReference 'Microsoft.KeyVault/vaults@2024-12-01-preview' existing = {
+resource keyVaultReference 'Microsoft.KeyVault/vaults@2025-05-01' existing = {
   name: keyVaultName
 }
 
@@ -55,7 +60,66 @@ module monitoring 'modules/monitoring.bicep' = {
   }
 }
 
+// Redis cache
+module redis 'modules/redis.bicep' = {
+  name: 'deployRedisCache'
+  params: {
+    redisName: redisName
+  }
+}
+
+module redisUrlSecret 'modules/keyVaultSecret.bicep' = {
+  name: 'deployRedisUrlSecret'
+  params: {
+    keyVaultName: keyVaultName
+    secretName: redisUrlSecretName
+    secretValue: 'rediss://:${redis.outputs.primaryKey}@${redis.outputs.hostName}:${redis.outputs.sslPort}'
+  }
+}
+
+module redisPrivateEndpoint 'modules/privateEndpoint.bicep' = {
+  name: 'deployRedisPrivateEndpoint'
+  params: {
+    privateEndpointName: 'pe-${redisName}'
+    virtualNetworkName: virtualNetworkName
+    subnetName: redisSubnetName
+    resourceIdToLink: redis.outputs.resourceId
+    groupIds: [
+      'redisCache'
+    ]
+  }
+}
+
+module redisPrivateDnsZone 'modules/privateDnsZone.bicep' = {
+  name: 'deployRedisPrivateDnsZone'
+  params: {
+    privateDnsZoneFqdn: 'privatelink.redis.cache.windows.net'
+    virtualNetworkName: virtualNetworkName
+  }
+}
+
+module redisPrivateDnsARecord 'modules/privateDnsARecord.bicep' = {
+  name: 'deployRedisPrivateDnsARecord'
+  params: {
+    privateDnsZoneFqdn: redisPrivateDnsZone.outputs.resourceName
+    networkInterfaceName: redisPrivateEndpoint.outputs.privateEndpointNetworkInterfaceName
+    dnsRecordName: redisName
+  }
+}
+
 // Database
+module postgresDatabaseConnectionStringSecret 'modules/postgresConnectionStringSecret.bicep' = {
+  name: 'deployPostgresDatabaseConnectionStringSecret'
+  params: {
+    keyVaultName: keyVaultName
+    secretName: databaseConnectionStringSecretName
+    umamiDatabaseUsername: keyVaultReference.getSecret(databaseUsernameSecretName)
+    umamiDatabasePassword: keyVaultReference.getSecret(databasePasswordSecretName)
+    postgresServerName: postgresServerName
+    umamiDatabaseName: umamiDatabaseName
+  }
+}
+
 module postgresDatabasePrivateDns 'modules/privateDnsZone.bicep' = {
   name: 'deployPostgresDatabasePrivateDns'
   params: {
@@ -108,33 +172,31 @@ module umamiAppService 'modules/dockerAppService.bicep' = {
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
     publicNetworkAccess: 'Enabled'
-    appSettings: [
-      {
-        name: 'DATABASE_TYPE'
-        value: 'postgresql'
-      }
-      {
-        name: 'DATABASE_URL'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${databaseConnectionStringSecretName})'
-      }
-      {
-        name: 'APP_SECRET'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${appSecretName})'
-      }
-      {
-        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-        value: monitoring.outputs.applicationInsightsConnectionString
-      }
-      {
-        name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
-        value: '~3'
-      }
-      {
-        name: 'XDT_MicrosoftApplicationInsights_Mode'
-        value: 'Recommended'
-      }
-    ]
   }
+  dependsOn: [
+    postgresDatabaseConnectionStringSecret
+  ]
+}
+
+module umamiAppServiceAppSettings 'modules/appServiceSettings.bicep' = {
+  name: 'deployUmamiAppServiceAppSettings'
+  params: {
+    appServiceName: umamiAppServiceName
+    appSettings: {
+      WEBSITES_ENABLE_APP_SERVICE_STORAGE: 'false'
+      DATABASE_TYPE: 'postgresql'
+      DATABASE_URL: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${databaseConnectionStringSecretName})'
+      APP_SECRET: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${appSecretName})'
+      APPLICATIONINSIGHTS_CONNECTION_STRING: monitoring.outputs.applicationInsightsConnectionString
+      ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+      XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
+      REDIS_URL: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${redisUrlSecretName})'
+    }
+  }
+  dependsOn: [
+    umamiAppService
+    redisUrlSecret
+  ]
 }
 
 module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
@@ -142,34 +204,29 @@ module pgAdminAppService 'modules/dockerAppService.bicep' = if (deployPgAdmin &&
   params: {
     appServiceName: pgAdminAppServiceName!
     appServicePlanId: appServicePlan.outputs.resourceId
-    appSettings: [
-      {
-        name: 'PGADMIN_DEFAULT_EMAIL'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${pgAdminEmailAddressSecretName})'
-      }
-      {
-        name: 'PGADMIN_DEFAULT_PASSWORD'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${pgAdminPasswordSecretName})'
-      }
-      {
-        name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-        value: monitoring.outputs.applicationInsightsConnectionString
-      }
-      {
-        name: 'ApplicationInsightsAgent_EXTENSION_VERSION'
-        value: '~3'
-      }
-      {
-        name: 'XDT_MicrosoftApplicationInsights_Mode'
-        value: 'Recommended'
-      }
-    ]
     imageName: pgAdminDockerImageName
     imageTag: pgAdminDockerImageTag
     subnetName: appServiceSubnetName
     virtualNetworkName: virtualNetworkName
     publicNetworkAccess: 'Disabled'
   }
+}
+
+module pgAdminAppServiceAppSettings 'modules/appServiceSettings.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {
+  name: 'deployPgAdminAppServiceAppSettings'
+  params: {
+    appServiceName: pgAdminAppServiceName!
+    appSettings: {
+      PGADMIN_DEFAULT_EMAIL: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${pgAdminEmailAddressSecretName})'
+      PGADMIN_DEFAULT_PASSWORD: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${pgAdminPasswordSecretName})'
+      APPLICATIONINSIGHTS_CONNECTION_STRING: monitoring.outputs.applicationInsightsConnectionString
+      ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+      XDT_MicrosoftApplicationInsights_Mode: 'Recommended'
+    }
+  }
+  dependsOn: [
+    pgAdminAppService
+  ]
 }
 
 module pgAdminPrivateEndpoint 'modules/privateEndpoint.bicep' = if (deployPgAdmin && !empty(pgAdminAppServiceName)) {

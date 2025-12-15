@@ -4,21 +4,21 @@ param virtualNetworkName string
 param inboundSubnetName string
 param outboundSubnetName string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' existing = {
   name: virtualNetworkName
 }
 
-resource inboundSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-07-01' existing = {
+resource inboundSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-01-01' existing = {
   parent: virtualNetwork
   name: inboundSubnetName
 }
 
-resource outboundSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-07-01' existing = {
+resource outboundSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-01-01' existing = {
   parent: virtualNetwork
   name: outboundSubnetName
 }
 
-resource dnsPrivateResolver 'Microsoft.Network/dnsResolvers@2025-05-01' = {
+resource dnsPrivateResolver 'Microsoft.Network/dnsResolvers@2025-10-01-preview' = {
   name: dnsResolverName
   location: location
   properties: {
@@ -28,7 +28,7 @@ resource dnsPrivateResolver 'Microsoft.Network/dnsResolvers@2025-05-01' = {
   }
 }
 
-resource inboundEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2025-05-01' = {
+resource inboundEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2025-10-01-preview' = {
   parent: dnsPrivateResolver
   name: 'in-endpoint'
   location: location
@@ -44,7 +44,7 @@ resource inboundEndpoint 'Microsoft.Network/dnsResolvers/inboundEndpoints@2025-0
   }
 }
 
-resource outboundEndpoint 'Microsoft.Network/dnsResolvers/outboundEndpoints@2025-05-01' = {
+resource outboundEndpoint 'Microsoft.Network/dnsResolvers/outboundEndpoints@2025-10-01-preview' = {
   parent: dnsPrivateResolver
   name: 'out-endpoint'
   location: location

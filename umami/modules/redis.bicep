@@ -1,0 +1,25 @@
+param location string = resourceGroup().location
+param redisName string
+param redisSkuName string = 'Basic'
+param redisSkuCapacity int = 0
+param redisSkuFamily string = 'C'
+
+resource redis 'Microsoft.Cache/redis@2024-11-01' = {
+  name: redisName
+  location: location
+  properties: {
+    sku: {
+      name: redisSkuName
+      capacity: redisSkuCapacity
+      family: redisSkuFamily
+    }
+    publicNetworkAccess: 'Disabled'
+    enableNonSslPort: false
+  }
+}
+
+@secure()
+output primaryKey string = redis.listKeys().primaryKey
+output resourceId string = redis.id
+output hostName string = redis.properties.hostName
+output sslPort int = redis.properties.sslPort

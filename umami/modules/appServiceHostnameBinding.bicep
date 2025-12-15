@@ -3,11 +3,11 @@ param customDomainValue string
 @allowed(['CName', 'A'])
 param dnsRecordType string = 'CName'
 
-resource appService 'Microsoft.Web/sites@2024-11-01' existing = {
+resource appService 'Microsoft.Web/sites@2025-03-01' existing = {
   name: appServiceName
 }
 
-resource customDomain 'Microsoft.Web/sites/hostNameBindings@2024-11-01' = {
+resource customDomain 'Microsoft.Web/sites/hostNameBindings@2025-03-01' = {
   parent: appService
   name: customDomainValue
   properties: {

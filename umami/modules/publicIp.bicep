@@ -3,7 +3,7 @@ param skuName string = 'Standard'
 param skuTier string = 'Regional'
 param publicIpName string
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2024-07-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2025-01-01' = {
   name: publicIpName
   location: location
   sku: {

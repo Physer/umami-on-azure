@@ -1,7 +1,7 @@
 param virtualNetworkName string
 param privateDnsZoneFqdn string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' existing = {
   name: virtualNetworkName
 }
 

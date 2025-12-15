@@ -6,7 +6,7 @@ resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing 
   name: privateDnsZoneFqdn
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2024-07-01' existing = {
+resource networkInterface 'Microsoft.Network/networkInterfaces@2025-01-01' existing = {
   name: networkInterfaceName
 }
 

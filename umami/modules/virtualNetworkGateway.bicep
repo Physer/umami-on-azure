@@ -11,20 +11,20 @@ param vpnAddressSpace string
 var microsoftRegisteredAudience = 'c632b3df-fb67-4d84-bdcf-b95ad541b5c8'
 var microsoftRegisteredIssuer = 'https://sts.windows.net/${tenantId}/'
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' existing = {
   name: virtualNetworkName
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-07-01' existing = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2025-01-01' existing = {
   parent: virtualNetwork
   name: subnetName
 }
 
-resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2024-07-01' existing = {
+resource publicIpAddress 'Microsoft.Network/publicIPAddresses@2025-01-01' existing = {
   name: publicIpName
 }
 
-resource vpnGateway 'Microsoft.Network/virtualNetworkGateways@2024-07-01' = {
+resource vpnGateway 'Microsoft.Network/virtualNetworkGateways@2025-01-01' = {
   name: virtualNetworkGatewayName
   location: location
   properties: {

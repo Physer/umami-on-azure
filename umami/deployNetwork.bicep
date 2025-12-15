@@ -7,6 +7,7 @@ param keyVaultSubnetName string
 param dnsPrivateResolverInboundSubnetName string
 param dnsPrivateResolverOutboundSubnetName string
 param pgAdminAppServicePrivateEndpointSubnetName string
+param redisSubnetName string
 param vpnSubnetName string = 'GatewaySubnet' // This name is required by Azure
 
 // VPN parameters
@@ -26,6 +27,7 @@ module virtualNetwork './modules/virtualNetwork.bicep' = {
     dnsPrivateResolverOutboundSubnetName: dnsPrivateResolverOutboundSubnetName
     vpnSubnetName: vpnSubnetName
     pgAdminAppServicePrivateEndpointSubnetName: pgAdminAppServicePrivateEndpointSubnetName
+    redisSubnetName: redisSubnetName
   }
 }
 

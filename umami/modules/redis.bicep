@@ -17,3 +17,9 @@ resource redis 'Microsoft.Cache/redis@2024-11-01' = {
     enableNonSslPort: false
   }
 }
+
+@secure()
+output primaryKey string = redis.listKeys().primaryKey
+output resourceId string = redis.id
+output hostName string = redis.properties.hostName
+output sslPort int = redis.properties.sslPort

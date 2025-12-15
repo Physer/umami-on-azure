@@ -68,19 +68,12 @@ module redis 'modules/redis.bicep' = {
   }
 }
 
-resource redisReference 'Microsoft.Cache/redis@2024-11-01' existing = {
-  name: redisName
-  dependsOn: [
-    redis
-  ]
-}
-
 module redisUrlSecret 'modules/keyVaultSecret.bicep' = {
   name: 'deployRedisUrlSecret'
   params: {
     keyVaultName: keyVaultName
     secretName: redisUrlSecretName
-    secretValue: 'rediss://:${redisReference.listKeys().primaryKey}@${redisReference.properties.hostName}:${redisReference.properties.sslPort}'
+    secretValue: 'rediss://:${redis.outputs.primaryKey}@${redis.outputs.hostName}:${redis.outputs.sslPort}'
   }
 }
 
@@ -90,7 +83,7 @@ module redisPrivateEndpoint 'modules/privateEndpoint.bicep' = {
     privateEndpointName: 'pe-${redisName}'
     virtualNetworkName: virtualNetworkName
     subnetName: redisSubnetName
-    resourceIdToLink: redisReference.id
+    resourceIdToLink: redis.outputs.resourceId
     groupIds: [
       'redisCache'
     ]
